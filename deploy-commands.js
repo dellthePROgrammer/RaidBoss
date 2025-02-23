@@ -6,7 +6,10 @@ const { Routes } = require('discord-api-types/v9');
 const commands = [
     new SlashCommandBuilder()
         .setName('Add')
-        .setDescription('Add someone to the leaderboard')
+        .setDescription('Add someone to the leaderboard'),
+    new SlashCommandBuilder()
+        .setName('Remove')
+        .setDescription('Remove someone from the leaderboard')
 ].map(command => command.toJSON());
 
 const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
