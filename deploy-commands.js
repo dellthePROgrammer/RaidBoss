@@ -1,16 +1,27 @@
 require('dotenv').config();
-const { SlashCommandBuilder } = require('discord.js');
+const fs = require('node:fs');
+const path = require('node:path');
 const { REST } = require('@discordjs/rest');
 const { Routes } = require('discord-api-types/v9');
 
-const commands = [
-    new SlashCommandBuilder()
-        .setName('Add')
-        .setDescription('Add someone to the leaderboard'),
-    new SlashCommandBuilder()
-        .setName('Remove')
-        .setDescription('Remove someone from the leaderboard')
-].map(command => command.toJSON());
+const commands = [];
+const foldersPath = path.join(__dirname, 'commands');
+const commandFolders = fs.readdirSync(foldersPath);
+
+for (const folder of commandFolders) {
+    const commandsPath = path.join(foldersPath, folder);
+    const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
+
+    for (const file of commandFiles) {
+        const filePath = path.join(commandsPath, file);
+        const command = require(filePath);
+        if ('data' in command && 'execute' in command) {
+            commands.push(command.data.toJSON());
+        } else {
+            console.log(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
+        }
+    }
+}
 
 const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
 
@@ -22,7 +33,7 @@ const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
             Routes.applicationGuildCommands(process.env.DISCORD_CLIENT_ID),
             { body: commands }
         );
-        console.log('Slash commands registered successfully.');
+        console.log(`Successfully reloaded ${data.length} application (/) commands.`);
     } catch (error) {
         console.log('Error registering commands:', error);
     }
